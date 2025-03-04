@@ -1,17 +1,20 @@
-const { Pool } = require("pg");
+const { Sequelize } = require('sequelize');
+require('dotenv').config();
 
-// PostgreSQL Database Connection
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
-  ssl: { rejectUnauthorized: false }, // Required for AWS RDS
-});
+const sequelize = new Sequelize(
+    process.env.DB_NAME,
+    process.env.DB_USER,
+    process.env.DB_PASS,
+    {
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        dialect: 'postgres',
+        logging: false
+    }
+);
 
-pool.connect()
-  .then(() => console.log("✅ PostgreSQL Connected..."))
-  .catch(err => console.error("❌ Database Connection Error:", err));
+sequelize.authenticate()
+    .then(() => console.log('Database Connected!'))
+    .catch(err => console.error('Database Connection Error:', err));
 
-module.exports = pool;
+module.exports = sequelize;

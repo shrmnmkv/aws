@@ -1,31 +1,41 @@
-const express = require("express");
-const pool = require("./database");
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+require('dotenv').config();
+
 const router = express.Router();
 
-// Get All Users (Freelancers & Employers)
-router.get("/", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT id, name, email, role FROM users");
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Database error" });
-  }
+// **JWT Middleware**
+const authenticate = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) return res.status(403).json({ error: "Invalid token" });
+        req.user = decoded;
+        next();
+    });
+};
+
+// **Get User Profile**
+router.get('/profile', authenticate, async (req, res) => {
+    try {
+        const user = await User.findOne({ where: { email: req.user.email } });
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Create New User
-router.post("/", async (req, res) => {
-  const { name, email, password, role } = req.body;
-  try {
-    const result = await pool.query(
-      "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *",
-      [name, email, password, role]
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Database error" });
-  }
+// **List All Users**
+router.get('/list', async (req, res) => {
+    try {
+        const users = await User.findAll();
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;

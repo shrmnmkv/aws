@@ -1,33 +1,25 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const { Pool } = require("pg"); // PostgreSQL Client
-const authRoutes = require("./auth");
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const sequelize = require('./database');
 
 const app = express();
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
-// PostgreSQL Database Connection
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
-  ssl: { rejectUnauthorized: false }, // Required for AWS RDS
-});
+// Import Routes
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
 
-// Check Database Connection
-pool.connect()
-  .then(() => console.log("PostgreSQL Connected..."))
-  .catch(err => console.error("Database Connection Error:", err));
+app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
 
-app.use("/auth", authRoutes);
+// Default Route
+app.get('/', (req, res) => res.send("🚀 API is running"));
 
-app.get("/", (req, res) => {
-  res.send("Freelance Marketplace Backend Running...");
-});
-
+// Start Server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, async () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    await sequelize.sync(); // Sync database
+});
