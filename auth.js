@@ -13,7 +13,6 @@ const userPool = new CognitoUserPool(poolData);
 // Signup Route
 router.post("/signup", (req, res) => {
   const { email, password } = req.body;
-
   userPool.signUp(email, password, [{ Name: "email", Value: email }], null, (err, result) => {
     if (err) return res.status(400).json({ error: err.message });
     res.json({ message: "Signup successful!", user: result.user });
@@ -23,7 +22,6 @@ router.post("/signup", (req, res) => {
 // Login Route
 router.post("/login", (req, res) => {
   const { email, password } = req.body;
-
   const user = new CognitoUser({ Username: email, Pool: userPool });
   const authDetails = new AuthenticationDetails({ Username: email, Password: password });
 
